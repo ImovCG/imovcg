@@ -1,0 +1,9 @@
+[submodule "frontend"]
+	path = frontend
+	url = git@github.com:ImovCG/frontend.git
+[submodule "webscrapping"]
+	path = webscrapping
+	url = git@github.com:ImovCG/webscrapping.git
+[submodule "backend"]
+	path = backend
+	url = git@github.com:ImovCG/backend.git
