@@ -34,6 +34,8 @@ services:
   frontend:
     image: ghcr.io/imovcg/frontend:latest
     restart: unless-stopped
+    depends_on:
+      - backend
     ports:
       - "80:80"
     labels:
@@ -47,6 +49,11 @@ services:
     environment:
       BACKEND_URL: http://backend:8080/api/imoveis/lote
       SCRAPE_INTERVAL_SECONDS: ${SCRAPE_INTERVAL_SECONDS:-604800}
+      FB_COOKIES_PATH: /app/secrets/fb_cookies.json
+    volumes:
+      # Coloque os cookies do Facebook em ./secrets/fb_cookies.json na VM.
+      # Sem o arquivo, o scraper do FB e pulado e so a OLX roda.
+      - ./secrets:/app/secrets:ro
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
