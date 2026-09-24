@@ -3,3 +3,4 @@
 .env.*
 !.env.example
 .vite
+.DS_Store

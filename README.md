@@ -23,6 +23,11 @@ O imovCG coleta esses anúncios automaticamente, normaliza tudo num mesmo esquem
 mapa com filtros de preço, tipo, quartos, bairro e distância de um campus. O contato continua sendo
 feito direto com o anunciante, no anúncio de origem — não há intermediação nem taxa.
 
+Além do que é coletado, proprietários e imobiliárias de Campina Grande podem cadastrar imóveis
+diretamente na plataforma: eles entram com a conta Google, publicam pelo painel do anunciante e o
+imóvel passa a aparecer no mesmo mapa, marcado com a fonte `imovcg`. Esse inventário é exclusivo —
+não existe nos portais nacionais.
+
 ## Arquitetura
 
 Três serviços independentes, cada um no seu repositório, integrados por HTTP:
@@ -65,6 +70,50 @@ A aplicação fica em `http://localhost` e o banco persiste no volume `mysql_dat
 | `DB_USERNAME` / `DB_PASSWORD` | Credenciais da aplicação | — |
 | `CORS_ALLOWED_ORIGINS` | Origens aceitas pelo backend | `*` |
 | `SCRAPE_INTERVAL_SECONDS` | Intervalo entre coletas | `604800` (7 dias) |
+| `GOOGLE_CLIENT_ID` | Client ID OAuth usado para validar o login do anunciante | — |
+| `JWT_SECRET` | Segredo HMAC que assina a sessão do anunciante | — |
+| `JWT_EXPIRATION_SECONDS` | Validade do token de sessão | `604800` (7 dias) |
+| `SCRAPER_API_KEY` | Chave de serviço da carga em lote. Vazio deixa o endpoint aberto | vazio |
+
+## Anunciante
+
+O anunciante entra com a conta Google (Google Identity Services, gratuito). O frontend troca o ID
+token do Google por um JWT próprio no `POST /api/auth/google`; esse JWT protege apenas as rotas de
+`/api/anunciante/**`. Todo o resto da API continua público — quem só quer procurar imóvel não
+precisa de conta.
+
+| Rota | Acesso |
+|---|---|
+| `GET /api/imoveis`, `GET /api/imoveis/{id}` | Público |
+| `POST /api/auth/google` | Público |
+| `GET /api/auth/eu`, `PATCH /api/auth/eu` | JWT |
+| `GET/POST/PUT/DELETE /api/anunciante/imoveis` | JWT, escopo do dono |
+| `POST /api/imoveis/lote` | `X-Api-Key`, se `SCRAPER_API_KEY` estiver definida |
+
+Cada anúncio pertence a um anunciante: as rotas do painel só enxergam os imóveis do dono do token,
+e tentar ler ou editar o anúncio de outra pessoa devolve 404.
+
+**Contato.** Imóvel coletado leva para o anúncio de origem, na OLX ou no Facebook. Imóvel
+cadastrado aqui não tem origem para onde apontar: o botão abre o WhatsApp do anunciante. Como o
+Google não fornece telefone, o anunciante informa o número no painel (`PATCH /api/auth/eu`) — sem
+ele o botão de contato fica desativado, e o painel avisa isso.
+
+**Fotos.** O imovCG guarda apenas a URL da imagem, nunca o arquivo. Links de compartilhamento do
+Google Drive são convertidos para o endereço direto da imagem; o arquivo precisa estar como
+"Qualquer pessoa com o link".
+
+### Configurando o login do Google
+
+1. No [Google Cloud Console](https://console.cloud.google.com/), crie um projeto.
+2. Em **APIs e Serviços → Tela de permissão OAuth**, escolha **Externo** e preencha nome e e-mail
+   de suporte. Com os escopos básicos (`openid`, `email`, `profile`) não há processo de verificação.
+3. Em **Credenciais → Criar credenciais → ID do cliente OAuth → Aplicativo da Web**, adicione as
+   origens JavaScript autorizadas: `http://localhost:5173`, `http://localhost` e a URL de produção.
+4. Coloque o Client ID em `GOOGLE_CLIENT_ID` (backend, no `.env`) e na variável de repositório
+   `VITE_GOOGLE_CLIENT_ID` do GitHub Actions do frontend, que a injeta no build da imagem.
+
+O Client ID é público por natureza e vai no bundle do frontend. O `JWT_SECRET` não: ele fica só no
+`.env` da VM.
 
 ### Coleta do Facebook
 

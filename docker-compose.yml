@@ -26,6 +26,10 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_SECONDS: ${JWT_EXPIRATION_SECONDS:-604800}
+      SCRAPER_API_KEY: ${SCRAPER_API_KEY:-}
     ports:
       - "8080:8080"
     labels:
@@ -49,6 +53,7 @@ services:
     environment:
       BACKEND_URL: http://backend:8080/api/imoveis/lote
       SCRAPE_INTERVAL_SECONDS: ${SCRAPE_INTERVAL_SECONDS:-604800}
+      SCRAPER_API_KEY: ${SCRAPER_API_KEY:-}
       FB_COOKIES_PATH: /app/secrets/fb_cookies.json
     volumes:
       # Coloque os cookies do Facebook em ./secrets/fb_cookies.json na VM.
