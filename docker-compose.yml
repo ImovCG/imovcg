@@ -40,10 +40,27 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
-    ports:
-      - "80:80"
+    # Sem porta publicada: quem fala com o mundo e o Caddy, pela rede interna.
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    environment:
+      # Dominio publico apontado para a VM. Em localhost o Caddy usa um certificado local.
+      DOMINIO: ${DOMINIO:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificados emitidos: sem esse volume, cada recriacao pediria um novo ao Let's Encrypt.
+      - caddy_data:/data
+      - caddy_config:/config
 
   webscrapping:
     image: ghcr.io/imovcg/webscrapping:latest
@@ -74,3 +91,5 @@ services:
 
 volumes:
   mysql_data:
+  caddy_data:
+  caddy_config:

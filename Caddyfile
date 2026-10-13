@@ -1,0 +1,9 @@
+# Ponto de entrada publico do imovCG. O Caddy emite e renova sozinho o certificado
+# do Let's Encrypt para o dominio abaixo e repassa tudo para o nginx do frontend,
+# que continua servindo o SPA e fazendo proxy de /api/ para o backend.
+#
+# HTTPS nao e opcional: o login com Google recusa origens http e enderecos IP.
+{$DOMINIO} {
+	encode gzip
+	reverse_proxy frontend:80
+}

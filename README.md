@@ -41,8 +41,12 @@ Três serviços independentes, cada um no seu repositório, integrados por HTTP:
 Este repositório é o guarda-chuva: reúne os três como submódulos e contém o `docker-compose.yml`
 que sobe o conjunto.
 
-O `nginx` do frontend serve o SPA e faz proxy reverso de `/api/` para o backend pela rede interna
-do Docker, de modo que a porta 8080 não precisa ficar exposta.
+Na frente de tudo fica um **Caddy**, que atende as portas 80 e 443 e emite e renova sozinho o
+certificado HTTPS do Let's Encrypt para o domínio em `DOMINIO`. Ele repassa as requisições ao
+`nginx` do frontend, que serve o SPA e faz proxy reverso de `/api/` para o backend pela rede
+interna do Docker.
+
+HTTPS com domínio não é opcional: o login com Google recusa origens `http` e endereços IP.
 
 ## Executando
 
@@ -68,6 +72,7 @@ A aplicação fica em `http://localhost` e o banco persiste no volume `mysql_dat
 |---|---|---|
 | `MYSQL_ROOT_PASSWORD` | Senha de root do MySQL | — |
 | `DB_USERNAME` / `DB_PASSWORD` | Credenciais da aplicação | — |
+| `DOMINIO` | Domínio público; o Caddy emite o certificado HTTPS para ele | `localhost` |
 | `CORS_ALLOWED_ORIGINS` | Origens aceitas pelo backend | `*` |
 | `SCRAPE_INTERVAL_SECONDS` | Intervalo entre coletas | `604800` (7 dias) |
 | `GOOGLE_CLIENT_ID` | Client ID OAuth usado para validar o login do anunciante | — |
